@@ -3,6 +3,7 @@ package com.github.mikephil.charting.renderer;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.data.CandleData;
@@ -23,7 +24,7 @@ import java.util.List;
 public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
 
     protected CandleDataProvider mChart;
-
+    private final float barRadius = 25F;
     private float[] mBodyBuffers = new float[4];
 
     public ColumnRangeChartRenderer(CandleDataProvider chart, ChartAnimator animator,
@@ -98,10 +99,16 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
 
                 mRenderPaint.setStyle(dataSet.getDecreasingPaintStyle());
 
-                c.drawRect(
-                        mBodyBuffers[0], mBodyBuffers[3],
-                        mBodyBuffers[2], mBodyBuffers[1],
-                        mRenderPaint);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    c.drawRoundRect(
+                            mBodyBuffers[0], mBodyBuffers[3],
+                            mBodyBuffers[2], mBodyBuffers[1], barRadius, barRadius,
+                            mRenderPaint);
+                } else
+                    c.drawRect(
+                            mBodyBuffers[0], mBodyBuffers[3],
+                            mBodyBuffers[2], mBodyBuffers[1],
+                            mRenderPaint);
 
             } else if (open < close) {
 
@@ -113,10 +120,16 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
 
                 mRenderPaint.setStyle(dataSet.getIncreasingPaintStyle());
 
-                c.drawRect(
-                        mBodyBuffers[0], mBodyBuffers[1],
-                        mBodyBuffers[2], mBodyBuffers[3],
-                        mRenderPaint);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    c.drawRoundRect(
+                            mBodyBuffers[0], mBodyBuffers[1],
+                            mBodyBuffers[2], mBodyBuffers[3], barRadius, barRadius,
+                            mRenderPaint);
+                } else
+                    c.drawRect(
+                            mBodyBuffers[0], mBodyBuffers[1],
+                            mBodyBuffers[2], mBodyBuffers[3],
+                            mRenderPaint);
             }
 
             // draw the shadows
@@ -124,9 +137,13 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
             mRenderPaint.setColor(dataSet.getShadowColor());
             mRenderPaint.setStyle(Paint.Style.STROKE);
 
-            c.drawRect(mBodyBuffers[0], mBodyBuffers[3],
-                    mBodyBuffers[2], mBodyBuffers[1],
-                    mRenderPaint);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                c.drawRoundRect(mBodyBuffers[0], mBodyBuffers[3],
+                        mBodyBuffers[2], mBodyBuffers[1], barRadius, barRadius, mRenderPaint);
+            } else {
+                c.drawRect(mBodyBuffers[0], mBodyBuffers[3],
+                        mBodyBuffers[2], mBodyBuffers[1], mRenderPaint);
+            }
 
         }
     }
