@@ -138,12 +138,8 @@ public class CandleDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
      * @param space
      */
     public void setBarSpace(float space) {
-
         if (space < 0f)
             space = 0f;
-        if (space > 0.45f)
-            space = 0.45f;
-
         mBarSpace = space;
     }
 
