@@ -3,8 +3,10 @@ package com.github.mikephil.charting.renderer;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
@@ -56,6 +58,16 @@ public class LineChartRenderer extends LineRadarRenderer {
 
     protected Path cubicPath = new Path();
     protected Path cubicFillPath = new Path();
+    protected Path mGenerateFilledPathBuffer = new Path();
+    private float[] mLineBuffer = new float[4];
+    /**
+     * cache for the circle bitmaps of all datasets
+     */
+    private HashMap<IDataSet, DataSetImageCache> mImageCaches = new HashMap<>();
+    /**
+     * buffer for drawing the circles
+     */
+    private float[] mCirclesBuffer = new float[2];
 
     public LineChartRenderer(LineDataProvider chart, ChartAnimator animator,
                              ViewPortHandler viewPortHandler) {
@@ -122,11 +134,96 @@ public class LineChartRenderer extends LineRadarRenderer {
             case CUBIC_BEZIER:
                 drawCubicBezier(dataSet);
                 break;
+            case GRADIENT_CUBIC_BEZIER:
+                drawGradientCubicBezier(dataSet);
+                break;
 
             case HORIZONTAL_BEZIER:
                 drawHorizontalBezier(dataSet);
                 break;
         }
+
+        mRenderPaint.setPathEffect(null);
+    }
+
+    private void drawGradientCubicBezier(ILineDataSet dataSet) {
+
+        float phaseY = mAnimator.getPhaseY();
+
+        Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
+
+        mXBounds.set(mChart, dataSet);
+
+        float intensity = dataSet.getCubicIntensity();
+
+        cubicPath.reset();
+
+        if (mXBounds.range >= 1) {
+
+            float prevDx = 0f;
+            float prevDy = 0f;
+            float curDx = 0f;
+            float curDy = 0f;
+
+            // Take an extra point from the left, and an extra from the right.
+            // That's because we need 4 points for a cubic bezier (cubic=4), otherwise we get lines moving and doing weird stuff on the edges of the chart.
+            // So in the starting `prev` and `cur`, go -2, -1
+            // And in the `lastIndex`, add +1
+
+            final int firstIndex = mXBounds.min + 1;
+            final int lastIndex = mXBounds.min + mXBounds.range;
+
+            Entry prevPrev;
+            Entry prev = dataSet.getEntryForIndex(Math.max(firstIndex - 2, 0));
+            Entry cur = dataSet.getEntryForIndex(Math.max(firstIndex - 1, 0));
+            Entry next = cur;
+            int nextIndex = -1;
+
+            if (cur == null) return;
+
+            // let the spline start
+            cubicPath.moveTo(cur.getX(), cur.getY() * phaseY);
+
+            for (int j = mXBounds.min + 1; j <= mXBounds.range + mXBounds.min; j++) {
+
+                prevPrev = prev;
+                prev = cur;
+                cur = nextIndex == j ? next : dataSet.getEntryForIndex(j);
+
+                nextIndex = j + 1 < dataSet.getEntryCount() ? j + 1 : j;
+                next = dataSet.getEntryForIndex(nextIndex);
+
+                prevDx = (cur.getX() - prevPrev.getX()) * intensity;
+                prevDy = (cur.getY() - prevPrev.getY()) * intensity;
+                curDx = (next.getX() - prev.getX()) * intensity;
+                curDy = (next.getY() - prev.getY()) * intensity;
+
+                cubicPath.cubicTo(prev.getX() + prevDx, (prev.getY() + prevDy) * phaseY,
+                        cur.getX() - curDx,
+                        (cur.getY() - curDy) * phaseY, cur.getX(), cur.getY() * phaseY);
+            }
+        }
+
+        // if filled is enabled, close the path
+        if (dataSet.isDrawFilledEnabled()) {
+
+            cubicFillPath.reset();
+            cubicFillPath.addPath(cubicPath);
+
+            drawCubicFill(mBitmapCanvas, dataSet, cubicFillPath, trans, mXBounds);
+        }
+
+        mRenderPaint.setStyle(Paint.Style.STROKE);
+
+        trans.pathValueToPixel(cubicPath);
+
+        LinearGradient linGrad = new LinearGradient(0, 0, 0, mChart.getHeight(),
+                dataSet.getGradientColor().getStartColor(),
+                dataSet.getGradientColor().getEndColor(),
+                Shader.TileMode.REPEAT);
+        mRenderPaint.setShader(linGrad);
+
+        mBitmapCanvas.drawPath(cubicPath, mRenderPaint);
 
         mRenderPaint.setPathEffect(null);
     }
@@ -283,8 +380,6 @@ public class LineChartRenderer extends LineRadarRenderer {
         }
     }
 
-    private float[] mLineBuffer = new float[4];
-
     /**
      * Draws a normal line.
      *
@@ -422,8 +517,6 @@ public class LineChartRenderer extends LineRadarRenderer {
 
         mRenderPaint.setPathEffect(null);
     }
-
-    protected Path mGenerateFilledPathBuffer = new Path();
 
     /**
      * Draws a filled linear path on the canvas.
@@ -578,8 +671,8 @@ public class LineChartRenderer extends LineRadarRenderer {
                         Utils.drawImage(
                                 c,
                                 icon,
-                                (int)(x + iconsOffset.x),
-                                (int)(y + iconsOffset.y),
+                                (int) (x + iconsOffset.x),
+                                (int) (y + iconsOffset.y),
                                 icon.getIntrinsicWidth(),
                                 icon.getIntrinsicHeight());
                     }
@@ -600,16 +693,6 @@ public class LineChartRenderer extends LineRadarRenderer {
     public void drawExtras(Canvas c) {
         drawCircles(c);
     }
-
-    /**
-     * cache for the circle bitmaps of all datasets
-     */
-    private HashMap<IDataSet, DataSetImageCache> mImageCaches = new HashMap<>();
-
-    /**
-     * buffer for drawing the circles
-     */
-    private float[] mCirclesBuffer = new float[2];
 
     protected void drawCircles(Canvas c) {
 
@@ -717,6 +800,15 @@ public class LineChartRenderer extends LineRadarRenderer {
     }
 
     /**
+     * Returns the Bitmap.Config that is used by this renderer.
+     *
+     * @return
+     */
+    public Bitmap.Config getBitmapConfig() {
+        return mBitmapConfig;
+    }
+
+    /**
      * Sets the Bitmap.Config to be used by this renderer.
      * Default: Bitmap.Config.ARGB_8888
      * Use Bitmap.Config.ARGB_4444 to consume less memory.
@@ -726,15 +818,6 @@ public class LineChartRenderer extends LineRadarRenderer {
     public void setBitmapConfig(Bitmap.Config config) {
         mBitmapConfig = config;
         releaseBitmap();
-    }
-
-    /**
-     * Returns the Bitmap.Config that is used by this renderer.
-     *
-     * @return
-     */
-    public Bitmap.Config getBitmapConfig() {
-        return mBitmapConfig;
     }
 
     /**
