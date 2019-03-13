@@ -205,6 +205,11 @@ You can follow me on Twitter [**@PhilippJahoda**](https://twitter.com/PhilippJah
 
 ![alt tag](https://raw.github.com/PhilJay/MPAndroidChart/master/screenshots/radarchart.png)
 
+<br/><br/>
+**ColumnRangeChart** (to represent data in waveform way, to show range of data)
+
+![alt tag](https://github.com/DipaliShah/MPAndroidChart/blob/master/screenshots/waveform_graph.png)
+
 <br/>
 
 <h1 id="license">License :page_facing_up:</h1>
