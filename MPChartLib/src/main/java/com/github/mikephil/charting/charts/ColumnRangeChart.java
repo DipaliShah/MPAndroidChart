@@ -3,8 +3,8 @@ package com.github.mikephil.charting.charts;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import com.github.mikephil.charting.data.CandleData;
-import com.github.mikephil.charting.interfaces.dataprovider.CandleDataProvider;
+import com.github.mikephil.charting.data.ColumnData;
+import com.github.mikephil.charting.interfaces.dataprovider.ColumnDataProvider;
 import com.github.mikephil.charting.renderer.ColumnRangeChartRenderer;
 
 /**
@@ -12,7 +12,7 @@ import com.github.mikephil.charting.renderer.ColumnRangeChartRenderer;
  *
  * @author Philipp Jahoda
  */
-public class ColumnRangeChart extends BarLineChartBase<CandleData> implements CandleDataProvider {
+public class ColumnRangeChart extends BarLineChartBase<ColumnData> implements ColumnDataProvider {
 
     public ColumnRangeChart(Context context) {
         super(context);
@@ -37,7 +37,7 @@ public class ColumnRangeChart extends BarLineChartBase<CandleData> implements Ca
     }
 
     @Override
-    public CandleData getCandleData() {
+    public ColumnData getColumnData() {
         return mData;
     }
 }

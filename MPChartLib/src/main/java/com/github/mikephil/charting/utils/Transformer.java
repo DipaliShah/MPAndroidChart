@@ -9,6 +9,7 @@ import com.github.mikephil.charting.data.CandleEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.interfaces.datasets.IBubbleDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ICandleDataSet;
+import com.github.mikephil.charting.interfaces.datasets.IColumnDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IScatterDataSet;
 
@@ -233,7 +234,40 @@ public class Transformer {
 
         return valuePoints;
     }
+    /**
+     * Transforms an List of Entry into a float array containing the x and
+     * y values transformed with all matrices for the CANDLESTICKCHART.
+     *
+     * @param data
+     * @return
+     */
+    public float[] generateTransformedValuesColumn(IColumnDataSet data,
+                                                   float phaseX, float phaseY, int from, int to) {
 
+        final int count = (int) ((to - from) * phaseX + 1) * 2;
+
+        if (valuePointsForGenerateTransformedValuesCandle.length != count) {
+            valuePointsForGenerateTransformedValuesCandle = new float[count];
+        }
+        float[] valuePoints = valuePointsForGenerateTransformedValuesCandle;
+
+        for (int j = 0; j < count; j += 2) {
+
+            CandleEntry e = data.getEntryForIndex(j / 2 + from);
+
+            if (e != null) {
+                valuePoints[j] = e.getX();
+                valuePoints[j + 1] = e.getHigh() * phaseY;
+            } else {
+                valuePoints[j] = 0;
+                valuePoints[j + 1] = 0;
+            }
+        }
+
+        getValueToPixelMatrix().mapPoints(valuePoints);
+
+        return valuePoints;
+    }
     /**
      * transform a path with all the given matrices VERY IMPORTANT: keep order
      * to value-touch-offset

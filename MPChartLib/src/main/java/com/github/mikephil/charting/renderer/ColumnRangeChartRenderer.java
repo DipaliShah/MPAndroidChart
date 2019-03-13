@@ -6,12 +6,12 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
-import com.github.mikephil.charting.data.CandleData;
 import com.github.mikephil.charting.data.CandleEntry;
+import com.github.mikephil.charting.data.ColumnData;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
-import com.github.mikephil.charting.interfaces.dataprovider.CandleDataProvider;
-import com.github.mikephil.charting.interfaces.datasets.ICandleDataSet;
+import com.github.mikephil.charting.interfaces.dataprovider.ColumnDataProvider;
+import com.github.mikephil.charting.interfaces.datasets.IColumnDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.MPPointD;
 import com.github.mikephil.charting.utils.MPPointF;
@@ -23,11 +23,11 @@ import java.util.List;
 
 public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
 
-    protected CandleDataProvider mChart;
     private final float barRadius = 25F;
+    protected ColumnDataProvider mChart;
     private float[] mBodyBuffers = new float[4];
 
-    public ColumnRangeChartRenderer(CandleDataProvider chart, ChartAnimator animator,
+    public ColumnRangeChartRenderer(ColumnDataProvider chart, ChartAnimator animator,
                                     ViewPortHandler viewPortHandler) {
         super(animator, viewPortHandler);
         mChart = chart;
@@ -41,9 +41,9 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
     @Override
     public void drawData(Canvas c) {
 
-        CandleData candleData = mChart.getCandleData();
+        ColumnData candleData = mChart.getColumnData();
 
-        for (ICandleDataSet set : candleData.getDataSets()) {
+        for (IColumnDataSet set : candleData.getDataSets()) {
 
             if (set.isVisible())
                 drawDataSet(c, set);
@@ -51,7 +51,7 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
     }
 
     @SuppressWarnings("ResourceAsColor")
-    protected void drawDataSet(Canvas c, ICandleDataSet dataSet) {
+    protected void drawDataSet(Canvas c, IColumnDataSet dataSet) {
 
         Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
 
@@ -88,16 +88,15 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
 
             trans.pointValuesToPixel(mBodyBuffers);
 
+            if (dataSet.getColumnColor() == ColorTemplate.COLOR_NONE) {
+                mRenderPaint.setColor(dataSet.getColor(j));
+            } else {
+                mRenderPaint.setColor(dataSet.getColumnColor());
+            }
+
+            mRenderPaint.setStyle(dataSet.getColumnPaintStyle());
             // draw body differently for increasing and decreasing entry
             if (open > close) { // decreasing
-
-                if (dataSet.getDecreasingColor() == ColorTemplate.COLOR_NONE) {
-                    mRenderPaint.setColor(dataSet.getColor(j));
-                } else {
-                    mRenderPaint.setColor(dataSet.getDecreasingColor());
-                }
-
-                mRenderPaint.setStyle(dataSet.getDecreasingPaintStyle());
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     c.drawRoundRect(
@@ -111,14 +110,6 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
                             mRenderPaint);
 
             } else if (open < close) {
-
-                if (dataSet.getIncreasingColor() == ColorTemplate.COLOR_NONE) {
-                    mRenderPaint.setColor(dataSet.getColor(j));
-                } else {
-                    mRenderPaint.setColor(dataSet.getIncreasingColor());
-                }
-
-                mRenderPaint.setStyle(dataSet.getIncreasingPaintStyle());
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     c.drawRoundRect(
@@ -154,11 +145,11 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
         // if values are drawn
         if (isDrawingValuesAllowed(mChart)) {
 
-            List<ICandleDataSet> dataSets = mChart.getCandleData().getDataSets();
+            List<IColumnDataSet> dataSets = mChart.getColumnData().getDataSets();
 
             for (int i = 0; i < dataSets.size(); i++) {
 
-                ICandleDataSet dataSet = dataSets.get(i);
+                IColumnDataSet dataSet = dataSets.get(i);
 
                 if (!shouldDrawValues(dataSet) || dataSet.getEntryCount() < 1)
                     continue;
@@ -170,7 +161,7 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
 
                 mXBounds.set(mChart, dataSet);
 
-                float[] positions = trans.generateTransformedValuesCandle(
+                float[] positions = trans.generateTransformedValuesColumn(
                         dataSet, mAnimator.getPhaseX(), mAnimator.getPhaseY(), mXBounds.min, mXBounds.max);
 
                 float yOffset = Utils.convertDpToPixel(5f);
@@ -230,11 +221,11 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
     @Override
     public void drawHighlighted(Canvas c, Highlight[] indices) {
 
-        CandleData candleData = mChart.getCandleData();
+        ColumnData candleData = mChart.getColumnData();
 
         for (Highlight high : indices) {
 
-            ICandleDataSet set = candleData.getDataSetByIndex(high.getDataSetIndex());
+            IColumnDataSet set = candleData.getDataSetByIndex(high.getDataSetIndex());
 
             if (set == null || !set.isHighlightEnabled())
                 continue;
