@@ -81,4 +81,5 @@ public interface IColumnDataSet extends ILineScatterCandleRadarDataSet<CandleEnt
 
     List<Entry> getBreathingEntries();
 
+    float getBreathingWidth();
 }

@@ -45,6 +45,8 @@ public class ColumnDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
      * the width of the shadow of the candle
      */
     private float mShadowWidth = 3f;
+
+    private float mBreathingWidth = 3f;
     /**
      * should the candle bars show?
      * when false, only "ticks" will show
@@ -89,6 +91,7 @@ public class ColumnDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
         candleDataSet.mColumnPaintStyle = mColumnPaintStyle;
         candleDataSet.mBreathingEntries = mBreathingEntries;
         candleDataSet.mShadowColor = mShadowColor;
+        candleDataSet.mBreathingWidth = mBreathingWidth;
     }
 
     @Override
@@ -125,9 +128,8 @@ public class ColumnDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
     }
 
     /**
-     *
      * @param space Sets the space that is left out on the left and right side of each
-     *      * candle, default 0.1f (10%), max 0.45f, min 0f
+     *              * candle, default 0.1f (10%), max 0.45f, min 0f
      */
     public void setBarSpace(float space) {
         if (space < 0f)
@@ -141,13 +143,14 @@ public class ColumnDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
     }
 
     /**
-     *
      * @param width Sets the width of the candle-shadow-line in pixels. Default 3f.
      */
     public void setShadowWidth(float width) {
         mShadowWidth = Utils.convertDpToPixel(width);
     }
-
+    public void setBreathingWidth(float width) {
+        mBreathingWidth = Utils.convertDpToPixel(width);
+    }
     @Override
     public boolean getShowCandleBar() {
         return mShowCandleBar;
@@ -195,15 +198,6 @@ public class ColumnDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
         return mBreathingColor;
     }
 
-    /**
-     * It is necessary to implement ColorsList class that will encapsulate
-     * colors list functionality, because It's wrong to copy paste setColor,
-     * addColor, ... resetColors for each time when we want to add a coloring
-     * options for one of objects
-     *
-     * @author Mesrop
-     */
-
     public void setBreathingColor(int mBreathingColor) {
         this.mBreathingColor = mBreathingColor;
     }
@@ -243,6 +237,11 @@ public class ColumnDataSet extends LineScatterCandleRadarDataSet<CandleEntry> im
     @Override
     public List<Entry> getBreathingEntries() {
         return mBreathingEntries;
+    }
+
+    @Override
+    public float getBreathingWidth() {
+        return mBreathingWidth;
     }
 
     public void setBreathingEntries(List<Entry> mBreathingEntries) {

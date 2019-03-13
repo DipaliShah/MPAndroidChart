@@ -2,12 +2,14 @@ package com.github.mikephil.charting.renderer;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.data.CandleEntry;
 import com.github.mikephil.charting.data.ColumnData;
+import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.dataprovider.ColumnDataProvider;
@@ -45,9 +47,55 @@ public class ColumnRangeChartRenderer extends LineScatterCandleRadarRenderer {
 
         for (IColumnDataSet set : candleData.getDataSets()) {
 
-            if (set.isVisible())
+            if (set.isVisible()) {
                 drawDataSet(c, set);
+                drawStoppedBreathing(c, set);
+            }
         }
+
+
+    }
+
+    private void drawStoppedBreathing(Canvas c, IColumnDataSet dataSet) {
+
+        Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
+
+        Paint breathingPaint = new Paint();
+        breathingPaint.setColor(dataSet.getBreathingColor());
+        breathingPaint.setStyle(dataSet.getBreathingPaintStyle());
+        breathingPaint.setStrokeWidth(dataSet.getBreathingWidth());
+
+        Path path = new Path();
+        List<Entry> mBreathingEntries = dataSet.getBreathingEntries();
+
+        for (Entry entry : mBreathingEntries) {
+
+            MPPointD pix = trans.getPixelForValues(entry.getX(), entry.getY());
+
+            MPPointD pixLeft = trans.getPixelForValues(entry.getX() - 0.5F, entry.getY());
+            MPPointD pixRight = trans.getPixelForValues(entry.getX() + 0.5F, entry.getY());
+
+            //Horizontal top line
+            path.reset();
+            path.moveTo((float) pixLeft.x, mViewPortHandler.contentTop());
+            path.lineTo((float) pixRight.x, mViewPortHandler.contentTop());
+            c.drawPath(path, breathingPaint);
+
+            //Vertical line
+            path.reset();
+            path.moveTo((float) pix.x, mViewPortHandler.contentTop());
+            path.lineTo((float) pix.x, mViewPortHandler.contentBottom());
+            c.drawPath(path, breathingPaint);
+
+            //Horizontal bottom line
+            path.reset();
+            path.moveTo((float) pixLeft.x, mViewPortHandler.contentBottom());
+            path.lineTo((float) pixRight.x, mViewPortHandler.contentBottom());
+            c.drawPath(path, breathingPaint);
+
+
+        }
+
     }
 
     @SuppressWarnings("ResourceAsColor")
